@@ -1,0 +1,6 @@
+# 追加到 ~/.dsh/profiles/web/cordis.patch.yml 的插件行
+# 新增条目必须用 `insert:` 包裹（顶层无 id 时插入根）。
+
+- insert:
+    - id: ui-desktop-pet
+      name: 'dsh-desktop-pet'

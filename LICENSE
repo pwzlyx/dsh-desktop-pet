@@ -1,0 +1,35 @@
+MIT License
+
+Copyright (c) 2026 zengleiyixiao1
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## 素材（非 MIT）许可说明
+
+本仓库的代码部分采用上述 MIT License；但 `lib/client.js` 内嵌的「鲸鱼娘」
+立绘素材来自社区原创 OC「溟月」（上善无形）+ DeepSeek 元素二创（ZipZipPipe），
+其角色形象授权为 **CC BY-NC-SA 4.0（署名、非商业使用、相同方式共享）**。
+
+- 允许：保留署名的个人及其他非商业使用。
+- 禁止：商业使用。
+- 衍生作品必须以相同许可证共享。
+
+完整署名见 `NOTICE.md`。若原作者认为不妥，请联系删除。

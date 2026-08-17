@@ -1,0 +1,45 @@
+{
+  "name": "dsh-desktop-pet",
+  "version": "0.1.0",
+  "description": "鲸鱼娘桌面看板娘插件（DeepSeek Harness 客户端插件）：平滑立绘鲸鱼娘随状态切换（空闲/执行中/等待/出错/完成），带台词气泡、活动信息、系统通知、标签页角标、可拖动、指令输入框与 PiP 浮窗模式。",
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "client-plugin",
+    "desktop-pet",
+    "whale-girl",
+    "kanban-musume",
+    "鲸鱼娘",
+    "看板娘"
+  ],
+  "author": "zengleiyixiao1",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime"
+      ],
+      "platform": "web"
+    }
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "@deepseek-ai/dsh-client-runtime": "^0.1.0-rc.6"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "NOTICE.md",
+    "LICENSE",
+    "README.md"
+  ],
+  "license": "MIT"
+}
