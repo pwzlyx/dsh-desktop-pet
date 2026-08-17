@@ -39,7 +39,8 @@
     "lib/client.js",
     "NOTICE.md",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "cordis.patch.snippet.yml"
   ],
   "license": "MIT"
 }
