@@ -1,5 +1,5 @@
 {
-  "name": "dsh-desktop-pet",
+  "name": "@zengleiyixiao/dsh-desktop-pet",
   "version": "0.1.0",
   "description": "鲸鱼娘桌面看板娘插件（DeepSeek Harness 客户端插件）：平滑立绘鲸鱼娘随状态切换（空闲/执行中/等待/出错/完成），带台词气泡、活动信息、系统通知、标签页角标、可拖动、指令输入框与 PiP 浮窗模式。",
   "keywords": [
