@@ -1,0 +1,22 @@
+# @zengleiyixiao/dsh-desktop-pet bundle patch
+#
+# This is the `dsh.bundle.patch` layer of the package: when the plugin is
+# installed into a profile (`dsh plugin --profile <name> add <path>` or a
+# manual `pnpm add` + appending to `dsh.profile.bundles`), profile boot
+# merges this insert and mounts the plugin row — no manual profile
+# cordis.patch.yml edits needed.
+#
+# Do NOT also keep a manual `ui-desktop-pet` insert row in the profile's own
+# cordis.patch.yml: two mounts register /pet/quota twice and fail the plugin
+# tree at boot (duplicate prefix route).
+#
+# Quota defaults target the GLM Coding Plan personal plan (bigmodel.cn,
+# type=1). Override per-profile with a same-id row in the profile's
+# cordis.patch.yml (later user-layer rows patch bundle rows).
+- insert:
+    - id: ui-desktop-pet
+      name: '@zengleiyixiao/dsh-desktop-pet'
+      config:
+        quota:
+          provider: zai-coding-cn
+          type: 1

@@ -1,7 +1,7 @@
 {
   "name": "@zengleiyixiao/dsh-desktop-pet",
-  "version": "0.1.0",
-  "description": "鲸鱼娘桌面看板娘插件（DeepSeek Harness 客户端插件）：平滑立绘鲸鱼娘随状态切换（空闲/执行中/等待/出错/完成），带台词气泡、活动信息、系统通知、标签页角标、可拖动、指令输入框与 PiP 浮窗模式。",
+  "version": "0.7.0",
+  "description": "鲸鱼娘桌面看板娘插件（DeepSeek Harness 客户端插件）：仅浮窗模式——App 内不渲染宠物，GUI 启动自动唤起桌面独立置顶浮窗；立绘随状态切换、台词气泡、系统通知、指令输入框、GLM Coding Plan 额度面板（5h/周窗口用量、剩余积分、重置倒计时）；Alt+Shift+W / 输入框旁 🐳 按钮随时显隐。",
   "keywords": [
     "deepseek",
     "deepseek-harness",
@@ -11,7 +11,10 @@
     "whale-girl",
     "kanban-musume",
     "鲸鱼娘",
-    "看板娘"
+    "看板娘",
+    "glm",
+    "coding-plan",
+    "quota"
   ],
   "author": "zengleiyixiao1",
   "type": "module",
@@ -20,27 +23,35 @@
   "exports": {
     ".": "./lib/index.js",
     "./client": "./lib/client.js",
+    "./quota": "./lib/quota.js",
     "./package.json": "./package.json"
   },
   "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
     "client": {
       "inject": [
         "@deepseek-ai/dsh-client-runtime"
       ],
       "platform": "web"
-    }
+    },
+    "manifestVersion": 1
   },
   "peerDependencies": {
     "react": "^18.2.0",
-    "@deepseek-ai/dsh-client-runtime": "^0.1.0-rc.6"
+    "@deepseek-ai/dsh-client-runtime": "^0.1.0-rc.6 || >=0.2.0-rc.1 <0.3.0-0"
   },
   "files": [
     "lib/index.js",
     "lib/client.js",
+    "lib/quota.js",
+    "lib/float.html",
+    "lib/float-app/",
+    "cordis.patch.yml",
     "NOTICE.md",
     "LICENSE",
-    "README.md",
-    "cordis.patch.snippet.yml"
+    "README.md"
   ],
   "license": "MIT"
 }

@@ -1,5 +1,31 @@
-# 追加到 ~/.dsh/profiles/web/cordis.patch.yml 的插件行
+# 追加到 ~/.dsh/profiles/<profile>/cordis.patch.yml 的插件行（web / desktop 通用）
 # 新增条目必须用 `insert:` 包裹（顶层无 id 时插入根）。
+#
+# v0.2.0 起支持 quota 配置块（Coding Plan 额度显示，可选）：
+#   quota.provider     'zai-coding-cn'（国内，默认）或 'zai'（国际）
+#   quota.apiKey       Coding Plan API Key（不填则回退环境变量
+#                      ZAI_CODING_CN_API_KEY / zai: ZAI_API_KEY）
+#   quota.organization 国内新积分套餐必填，形如 org-xxxxxxx
+#   quota.project      国内新积分套餐必填，形如 proj_xxxxxxx
+#   quota.type         1=个人套餐 2=团队套餐（默认 2）
+#   quota.intervalSeconds  轮询间隔秒数，默认 300，最小 30
+#
+# organization/project/type 获取方式：浏览器登录 bigmodel.cn → 「Coding Plan」
+# 页面 → DevTools Network 里任意 monitor 请求的请求头（bigmodel-organization /
+# bigmodel-project）。
+#
+# 示例（带额度显示）：
+#
+# - insert:
+#     - id: ui-desktop-pet
+#       name: '@zengleiyixiao/dsh-desktop-pet'
+#       config:
+#         quota:
+#           provider: zai-coding-cn
+#           organization: org-xxxxxxxx
+#           project: proj_xxxxxxxx
+#           type: 2
+#           # apiKey: 建议用环境变量 ZAI_CODING_CN_API_KEY 而不是明文写在这里
 
 - insert:
     - id: ui-desktop-pet

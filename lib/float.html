@@ -1,0 +1,401 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>鲸鱼娘</title>
+<style>
+/* Visual parity with the in-app PetPanel (lib/client.js .dsh-pet__* styles):
+   same colors, dots, bars, section order. Differences: static layout inside
+   the float card, and every interactive element must sit in a no-drag region
+   (macOS drag regions swallow click/hover — the v0.4.1 ✕ bug). */
+html,body{margin:0;height:100%;background:transparent;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body{-webkit-app-region:drag;user-select:none}
+.no-drag,.dpet-x,.dpet-input,.dpet-btn,.dpet-img,.dpet-panel,.dpet-target{-webkit-app-region:no-drag}
+.dpet-card{position:relative;display:flex;flex-direction:column;height:100%;box-sizing:border-box;color:#fff;font-size:12px;line-height:1.5}
+/* v0.6.5：去掉整窗大黑底——鲸鱼娘与台词气泡直接浮在桌面；内容区集中到下方玻璃卡 */
+.dpet-xbar{display:flex;justify-content:flex-end;padding:4px 6px 0}
+.dpet-x{width:20px;height:20px;line-height:18px;text-align:center;border-radius:50%;background:rgba(60,66,82,.55);color:rgba(203,213,225,.8);font-size:10px;cursor:pointer;border:none;padding:0}
+.dpet-x:hover{background:#ef4444;color:#fff}
+.dpet-sheet{display:flex;flex-direction:column;flex:1;min-height:0;margin:4px 6px 6px;background:linear-gradient(180deg,rgba(24,29,42,.88),rgba(15,19,29,.93));border:1px solid rgba(148,163,184,.26);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden}
+.dpet-hero{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 10px 10px}
+/* v0.5.1: hover details expand INLINE below the hero (pushing the panel down)
+   instead of overlaying the illustration — an absolute popup covered the whale-girl. */
+.dpet-pop{display:none;position:absolute;left:10px;right:10px;z-index:10;background:rgba(16,20,31,.97);border:1px solid rgba(148,163,184,.35);border-radius:10px;padding:8px 10px;font-size:11px;line-height:1.6;color:#e2e8f0;box-shadow:0 6px 18px rgba(0,0,0,.5);pointer-events:none}
+.dpet-pop.show{display:block}
+.dpet-pop b{color:#9aa4b2;font-weight:600}
+.dpet-img{width:132px;height:132px;object-fit:contain;cursor:pointer;filter:drop-shadow(0 6px 14px rgba(0,0,0,.4));transition:transform .15s}
+.dpet-img:hover{transform:scale(1.05)}
+.dpet-badge{font-size:10px;color:#e2e8f0;background:rgba(28,33,46,.88);border:1px solid rgba(148,163,184,.25);padding:2px 8px;border-radius:8px;box-shadow:0 3px 10px rgba(0,0,0,.35)}
+.dpet-line{max-width:250px;font-size:11px;line-height:1.45;color:#e2e8f0;background:rgba(28,33,46,.88);border:1px solid rgba(148,163,184,.25);border-radius:10px;padding:6px 10px;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.dpet-panel{flex:1;min-height:0;overflow:auto;padding:8px 12px 8px;cursor:default}
+.dpet-panel::-webkit-scrollbar{width:6px}
+.dpet-panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:3px}
+.dpet-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9aa4b2;margin:8px 2px 4px}
+.dpet-title:first-child{margin-top:0}
+.dpet-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px}
+.dpet-row[data-sid]{cursor:pointer}
+.dpet-row[data-sid]:hover{background:rgba(255,255,255,.08)}
+.dpet-row-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dpet-dot{flex:none;width:8px;height:8px;border-radius:50%}
+.dpet-dot--working{background:#f59e0b}
+.dpet-dot--waiting{background:#f97316}
+.dpet-dot--done{background:#22c55e}
+.dpet-empty{padding:8px;color:#9aa4b2;font-style:italic}
+.dpet-error{color:#f87171;padding:6px 8px;word-break:break-word}
+.dpet-goalbar{height:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;margin:6px 2px 2px}
+.dpet-goalbar-fill{height:100%;background:linear-gradient(90deg,#22c55e,#34d399);transition:width .3s}
+.dpet-qrow{display:flex;align-items:center;gap:6px;padding:3px 2px}
+.dpet-qlabel{flex:none;width:44px;font-size:11px;color:#cbd2dc}
+.dpet-qb{display:block;flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
+.dpet-qf{display:block;height:100%;border-radius:3px;transition:width .4s}
+.dpet-qp{flex:none;width:34px;text-align:right;font-size:11px;font-variant-numeric:tabular-nums;color:#fff}
+.dpet-qr{flex:none;font-size:10px;color:#9aa4b2;font-variant-numeric:tabular-nums}
+.dpet-qlevel{font-size:10px;color:#9aa4b2;padding:1px 2px}
+.dpet-qerr{font-size:11px;color:#f87171;padding:4px 2px;word-break:break-word}
+.dpet-qhint{font-size:11px;color:#9aa4b2;padding:4px 2px;line-height:1.5}
+.dpet-foot{padding:8px 10px 10px}
+.dpet-footrow{display:flex;gap:5px;align-items:center}
+.dpet-input{flex:1;height:54px;resize:none;font-family:inherit;font-size:11px;line-height:1.5;color:#f1f5f9;background:rgba(60,66,82,.9);border:1px solid rgba(148,163,184,.35);border-radius:8px;padding:5px 8px;outline:none}
+.dpet-input:focus{border-color:#60a5fa}
+.dpet-btn{font-size:12px;background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:5px 9px;cursor:pointer}
+.dpet-btn:hover{background:#2563eb}
+.dpet-hint{font-size:10px;color:#9aa4b8;padding-top:5px;text-align:center}
+.dpet-trow{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.dpet-tlabel{flex:none;font-size:10px;color:#9aa4b2}
+.dpet-target{flex:1;min-width:0;font-size:11px;color:#cbd5e1;background:#111827;border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:2px 4px;outline:none}
+  .dpet-target optgroup{background:#0b1220;color:#93a4bd;font-style:normal}
+  .dpet-target option{background:#111827;color:#e2e8f0}
+.dpet-pop .dp-sec{margin-top:4px}
+.dpet-pop .dp-txt{margin:2px 0 0;max-height:96px;overflow:hidden;word-break:break-word;color:#e2e8f0}
+</style></head><body>
+<div class="dpet-card" id="card">
+  <div class="dpet-xbar"><button class="dpet-x" id="x" title="收起浮窗（Esc）">✕</button></div>
+  <div class="dpet-hero">
+    <img class="dpet-img" id="img" alt="whale-girl" src="" title="点我输入对话">
+    <div class="dpet-badge" id="badge" style="display:none"></div>
+    <div class="dpet-line" id="line">连接桌面伴侣中…</div>
+  </div>
+  <div class="dpet-pop" id="pop"></div>
+  <div class="dpet-sheet">
+  <div class="dpet-panel" id="panel"></div>
+  <div class="dpet-foot">
+    <div class="dpet-trow">
+      <span class="dpet-tlabel">发送到</span>
+      <select class="dpet-target" id="target"><option value="">当前会话</option></select>
+    </div>
+    <div class="dpet-footrow">
+      <textarea class="dpet-input" id="inp" rows="3" placeholder="对鲸鱼娘说点什么…" maxlength="500"></textarea>
+      <button class="dpet-btn" id="send">➤</button>
+    </div>
+    <div class="dpet-hint">Enter 发送 · Shift+Enter 换行 · Alt+Shift+W 显隐浮窗</div>
+  </div>
+  </div>
+</div>
+<script>
+(function () {
+  // v0.6: full parity with the in-app panel + target-session select + hover
+  // details. State (art, dialogue, quota AND
+  // the whole panel projection) arrives by polling /pet/float/live; prompts
+  // POST to /pet/float/prompt; session-row clicks POST to /pet/float/open
+  // (the GUI page drains it and jumps via ctx.sessions.open).
+  var els = {
+    img: document.getElementById('img'),
+    badge: document.getElementById('badge'),
+    line: document.getElementById('line'),
+    panel: document.getElementById('panel'),
+    inp: document.getElementById('inp'),
+    target: document.getElementById('target'),
+  };
+  var state = { line: '', activityText: '', status: '', badgeText: '', quota: null, panel: null };
+  var imgHash = '';
+  var lastSessionId = null;
+  var PENDING_LABELS = { approval: '等待批准', 'plan-review': '等待计划评审', question: '等待答复' };
+  var GOAL_LABELS = { active: '进行中', paused: '已暂停', blocked: '已阻塞', complete: '已完成' };
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fmtCountdown(resetAt) {
+    var sec = Math.max(0, Math.floor((resetAt - Date.now()) / 1000));
+    if (sec <= 0) return '0s';
+    var d = Math.floor(sec / 86400); sec -= d * 86400;
+    var h = Math.floor(sec / 3600); sec -= h * 3600;
+    var m = Math.floor(sec / 60); sec -= m * 60;
+    if (d > 0) return d + 'd' + h + 'h';
+    if (h > 0) return h + 'h' + m + 'm';
+    if (m > 0) return m + 'm' + sec + 's';
+    return sec + 's';
+  }
+  function quotaTone(pct) { return pct > 85 ? '#ef4444' : pct > 50 ? '#f59e0b' : '#22c55e'; }
+  function fmtCredits(n) {
+    if (typeof n !== 'number' || !isFinite(n) || n <= 0) return '';
+    if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (n >= 1e4) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'k';
+    return String(Math.round(n * 10) / 10);
+  }
+  function qTitle(w) {
+    var bits = [];
+    if (w.remaining != null) bits.push('剩余 ' + w.remaining);
+    if (w.total != null) bits.push('共 ' + w.total);
+    if (w.resetAt) bits.push('重置 ' + fmtCountdown(w.resetAt) + ' 后');
+    return bits.join(' · ');
+  }
+  function quotaHtml(q) {
+    if (!q) return '';
+    var out = '<div class="dpet-title">🐋 Coding Plan' + (q.provider ? ' · ' + esc(q.provider) : '') + '</div>';
+    if (q.loading) return out + '<div class="dpet-qhint">额度加载中…</div>';
+    if (q.error) out += '<div class="dpet-qerr">⚠ ' + esc(q.error) + '</div>';
+    var ws = q.windows || [];
+    for (var i = 0; i < ws.length; i++) {
+      var w = ws[i];
+      var pct = Math.min(100, Math.max(0, w.pct || 0));
+      var credits = fmtCredits(w.remaining);
+      out += '<div class="dpet-qrow" title="' + esc(qTitle(w)) + '"><span class="dpet-qlabel">' + esc(w.label) + '</span>' +
+        '<span class="dpet-qb"><span class="dpet-qf" style="width:' + pct + '%;background:' + quotaTone(pct) + '"></span></span>' +
+        '<span class="dpet-qp">' + Math.round(pct) + '%</span>' +
+        (credits ? '<span class="dpet-qr">余' + esc(credits) + '</span>' : '') +
+        (w.resetAt ? '<span class="dpet-qr">⏳' + esc(fmtCountdown(w.resetAt)) + '</span>' : '') +
+        '</div>';
+    }
+    if (!ws.length && !q.error) out += '<div class="dpet-qhint">暂无额度数据</div>';
+    if (q.level) out += '<div class="dpet-qlevel">套餐：' + esc(q.level) + '</div>';
+    return out;
+  }
+  function rowHtml(dot, sid, label, extra) {
+    return '<div class="dpet-row"' + (sid ? ' data-sid="' + esc(sid) + '"' : '') + '>' +
+      (dot ? '<span class="dpet-dot ' + dot + '"></span>' : '') +
+      '<span class="dpet-row-label">' + esc(label) + '</span>' +
+      (extra ? '<span>' + esc(extra) + '</span>' : '') + '</div>';
+  }
+  function panelHtml(p) {
+    var out = '';
+    out += quotaHtml(state.quota);
+    if (p) {
+      if (p.tools && p.tools.length) {
+        out += '<div class="dpet-title">正在执行' + (p.turn != null ? ' · 第' + esc(p.turn) + '轮' : '') + '</div>';
+        for (var i = 0; i < p.tools.length; i++) {
+          var t = p.tools[i];
+          out += rowHtml(null, null, '⚙ ' + t.name + (t.summary ? ' · ' + t.summary : ''));
+        }
+      }
+      if (p.thinking) out += rowHtml(null, null, '💭 ' + p.thinking);
+      if (p.error) out += '<div class="dpet-error">⚠ ' + esc(p.error) + '</div>';
+      if (p.goal) {
+        out += '<div class="dpet-title">目标 · ' + esc(GOAL_LABELS[p.goal.phase] || p.goal.phase) + '</div>' +
+          '<div class="dpet-row-label" style="padding:0 2px">' + esc(p.goal.objective) + '</div>';
+      }
+      if (p.todos) {
+        var pct = p.todos.total ? Math.round(p.todos.done / p.todos.total * 100) : 0;
+        out += '<div class="dpet-title">待办 ' + p.todos.done + '/' + p.todos.total + '</div>' +
+          '<div class="dpet-goalbar"><div class="dpet-goalbar-fill" style="width:' + pct + '%"></div></div>' +
+          (p.todos.now ? '<div class="dpet-empty">进行中：' + esc(p.todos.now) + '</div>' : '');
+      }
+      var running = p.running || [], waiting = p.waiting || [], completed = p.completed || [];
+      if (running.length) out += '<div class="dpet-title">执行中的会话 · ' + running.length + '</div>';
+      for (var r = 0; r < running.length; r++) out += rowHtml('dpet-dot--working', running[r].id, running[r].label, null);
+      if (waiting.length) out += '<div class="dpet-title">需要你处理 · ' + waiting.length + '</div>';
+      for (var wI = 0; wI < waiting.length; wI++) out += rowHtml('dpet-dot--waiting', waiting[wI].id, waiting[wI].label, PENDING_LABELS[waiting[wI].kind] || waiting[wI].kind);
+      if (completed.length) out += '<div class="dpet-title">已完成 · 点击跳转</div>';
+      for (var c = 0; c < completed.length; c++) out += rowHtml('dpet-dot--done', completed[c].id, completed[c].label, null);
+      if (p.jobCount > 0) out += '<div class="dpet-empty">后台任务：' + p.jobCount + ' 个</div>';
+      if (!running.length && !waiting.length && !completed.length && !p.jobCount && !p.error && !(p.tools && p.tools.length)) {
+        out += '<div class="dpet-empty">当前空闲，没有进行中的会话。</div>';
+      }
+    }
+    return out;
+  }
+  var targetSig = '';
+  // v0.6.2：优先用 panel.tree（工作区 → 会话 二级，与左侧边栏一致）；
+  // 旧版 GUI 只发 running/waiting/completed 时退回平铺。
+  function targetOptionsHtml(p) {
+    var cur = (p && p.current) || null;
+    var want = readTarget();
+    var out = '<option value=""' + (!want ? ' selected' : '') + '>当前会话</option>';
+    function opt(id, label, prefix) {
+      return '<option value="' + esc(id) + '"' + (want === id ? ' selected' : '') + '>' + esc(prefix + ' ' + label.slice(0, 26) + (id === cur ? '（当前）' : '')) + '</option>';
+    }
+    if (p && p.tree && p.tree.length) {
+      for (var g = 0; g < p.tree.length; g++) {
+        var grp = p.tree[g];
+        out += '<optgroup label="' + esc(String(grp.title || '工作区').slice(0, 24)) + '">';
+        for (var s = 0; s < grp.sessions.length; s++) {
+          var r = grp.sessions[s];
+          out += opt(r.id, r.label, r.mark ? r.mark + ' ' : '');
+        }
+        out += '</optgroup>';
+      }
+      return out;
+    }
+    if (p) {
+      var seen = {};
+      function add(id, label, prefix) {
+        if (!id || seen[id]) return;
+        seen[id] = true;
+        out += opt(id, label, prefix);
+      }
+      var rs = p.running || [], ws = p.waiting || [], cs = p.completed || [];
+      for (var i = 0; i < rs.length; i++) add(rs[i].id, rs[i].label, '▶');
+      for (var j = 0; j < ws.length; j++) add(ws[j].id, ws[j].label, '⏸');
+      for (var k = 0; k < cs.length; k++) add(cs[k].id, cs[k].label, '✓');
+      var listed = rs.concat(ws).concat(cs).some(function (r) { return r.id === cur; });
+      if (cur && !listed && !seen[cur]) add(cur, cur, '●');
+    }
+    return out;
+  }
+  function readTarget() { try { return localStorage.getItem('dpet-target') || ''; } catch (e) { return ''; } }
+  function writeTarget(v) { try { if (v) localStorage.setItem('dpet-target', v); else localStorage.removeItem('dpet-target'); } catch (e) {} }
+  function syncTarget() {
+    if (!els.target || document.activeElement === els.target) return; // 用户正开着下拉时不重建
+    var p = state.panel;
+    var sig = '';
+    if (p && p.tree) sig = JSON.stringify(p.tree);
+    else if (p) {
+      var rs2 = p.running || [], ws2 = p.waiting || [], cs2 = p.completed || [];
+      sig = [p.current].concat(rs2.map(function (r) { return r.id; }), ws2.map(function (w) { return w.id; }), cs2.map(function (c) { return c.id; })).join('|');
+    }
+    if (sig === targetSig) return;
+    targetSig = sig;
+    var want = readTarget();
+    els.target.innerHTML = targetOptionsHtml(p);
+    // 选择的目标已消失 → 回退当前会话
+    var has = want === '' || Array.prototype.some.call(els.target.options, function (o) { return o.value === want; });
+    if (!has) { writeTarget(''); els.target.value = ''; }
+    else els.target.value = want;
+  }
+  function render() {
+    els.panel.innerHTML = panelHtml(state.panel);
+    els.line.textContent = state.line || state.activityText || '…';
+    syncTarget();
+    if (popMode) { buildPop(); placePop(popArmed); }
+  }
+  var STATUS_LABELS = { idle: '休息中', waiting: '等待你', working: '执行中', error: '出错了', ddone: '完成啦' };
+  var popMode = null; // null | 'status' | {session: id}
+  var pop = document.getElementById('pop');
+  function buildPop() {
+    var h;
+    if (popMode && popMode.session) {
+      var p = state.panel || {};
+      var sid = popMode.session;
+      var d = (p.details || {})[sid];
+      var label = sid;
+      var lists = [].concat(p.running || [], p.waiting || [], p.completed || []);
+      for (var i = 0; i < lists.length; i++) { if (lists[i].id === sid) { label = lists[i].label; break; } }
+      h = '<b>会话</b> ' + esc(label);
+      if (d && d.prompt) h += '<div class="dp-sec"><b>最近提示词</b><div class="dp-txt">' + esc(d.prompt) + '</div></div>';
+      if (d && d.output) h += '<div class="dp-sec"><b>当前输出' + (d.live ? '（生成中）' : '') + '</b><div class="dp-txt">' + esc(d.output) + '</div></div>';
+      if (!d || (!d.prompt && !d.output)) h += '<div class="dp-sec">（暂无预览：该会话未打开视图或尚无文本）</div>';
+    } else {
+      h = '<b>状态</b> ' + esc(STATUS_LABELS[state.status] || state.status || '—');
+      if (state.badgeText) h += ' · ' + esc(state.badgeText);
+      h += '<br><b>当前</b> ' + esc(state.activityText || '空闲');
+      var q = state.quota;
+      if (q && q.windows && q.windows.length) {
+        h += '<br><b>额度</b>';
+        if (q.level) h += ' 套餐 ' + esc(q.level);
+        for (var j = 0; j < q.windows.length; j++) {
+          var w2 = q.windows[j];
+          h += '<br>' + esc(w2.label) + ' 已用 ' + Math.round(w2.pct || 0) + '% · 余 ' + esc(fmtCredits(w2.remaining) || '—') + ' · ⏳' + esc(w2.resetAt ? fmtCountdown(w2.resetAt) : '—');
+        }
+      }
+    }
+    pop.innerHTML = h;
+  }
+  // v0.6.4：悬停需停留 450ms 才弹详情（防扫过误触）；弹层为锚定浮层，不再挤压面板内容
+  var popTimer = null;
+  var popArmed = null;   // 已计时/已展示的锚元素（null=状态卡模式）
+  var card = document.getElementById('card');
+  function placePop(anchor) {
+    if (!anchor || !card) return;
+    // 面板每秒整体重渲染：锚元素可能已脱离 DOM，按 data-sid 重查活节点
+    if (!anchor.isConnected) {
+      var sid = anchor.getAttribute && anchor.getAttribute('data-sid');
+      var live = sid ? document.querySelector('[data-sid="' + sid + '"]') : null;
+      if (!live) { disarmPop(); return; }
+      anchor = live; popArmed = live;
+    }
+    var cRect = card.getBoundingClientRect();
+    var aRect = anchor.getBoundingClientRect();
+    var h = pop.offsetHeight || 80;
+    var top = aRect.bottom - cRect.top + 4;
+    if (top + h > cRect.height - 4) top = aRect.top - cRect.top - h - 4; // 放不下 → 移到行上方
+    if (top < 2) top = 2;
+    pop.style.top = top + 'px';
+  }
+  function armPop(mode, anchor) {
+    if (popArmed === anchor) return;
+    disarmPop();
+    popArmed = anchor;
+    popTimer = setTimeout(function () {
+      popMode = mode; buildPop(); pop.classList.add('show'); placePop(anchor);
+    }, 450);
+  }
+  function disarmPop() {
+    if (popTimer) { clearTimeout(popTimer); popTimer = null; }
+    popArmed = null; popMode = null; pop.classList.remove('show');
+  }
+  els.img.addEventListener('mouseenter', function () { armPop('status', els.img); });
+  els.img.addEventListener('mouseleave', function () { disarmPop(); });
+  function poll() {
+    fetch('/pet/float/live?img=' + encodeURIComponent(imgHash), { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.ok) return;
+        if (j.imgSrc) els.img.src = j.imgSrc;
+        if (j.imgHash) imgHash = j.imgHash;
+        if (j.sessionId) lastSessionId = j.sessionId;
+        if (j.badgeText) { els.badge.textContent = j.badgeText; els.badge.style.display = ''; state.badgeText = j.badgeText; }
+        else { els.badge.style.display = 'none'; state.badgeText = ''; }
+        state.line = j.line || '';
+        state.activityText = j.activityText || '';
+        state.status = j.status || '';
+        state.quota = j.quota || null;
+        state.panel = j.panel || null;
+        render();
+      })
+      .catch(function () {});
+  }
+  setInterval(poll, 1000);
+  poll();
+  setInterval(render, 5000); // local ⏳ countdown re-tick
+  function send() {
+    var t = els.inp.value.trim();
+    if (!t) return;
+    fetch('/pet/float/prompt', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ text: t, sessionId: (els.target && els.target.value) || lastSessionId }),
+    }).catch(function () {});
+    els.inp.value = '';
+    els.line.textContent = '📨 已发送：' + t.slice(0, 40);
+  }
+  function collapse() {
+    try { if (window.__petFloat && window.__petFloat.hide) window.__petFloat.hide(); } catch (e) {}
+    fetch('/pet/float/collapse', { method: 'POST' }).catch(function () {});
+  }
+  document.getElementById('send').addEventListener('click', send);
+  els.inp.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') collapse(); });
+  document.getElementById('x').addEventListener('click', collapse);
+  document.getElementById('img').addEventListener('click', function () { els.inp.focus(); });
+  // session rows → ask the GUI to jump there (event delegation survives re-renders)
+  els.panel.addEventListener('click', function (e) {
+    var el = e.target && e.target.closest ? e.target.closest('[data-sid]') : null;
+    if (!el) return;
+    var sid = el.getAttribute('data-sid');
+    if (sid) fetch('/pet/float/open', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionId: sid }) }).catch(function () {});
+  });
+  // v0.6：悬停会话行 → 弹层显示该会话最近提示词与当前输出（事件委托防重渲染丢监听）
+  els.panel.addEventListener('mouseover', function (e) {
+    var el = e.target && e.target.closest ? e.target.closest('[data-sid]') : null;
+    if (!el) return;
+    armPop({ session: el.getAttribute('data-sid') }, el);
+  });
+  els.panel.addEventListener('mouseout', function (e) {
+    var el = e.target && e.target.closest ? e.target.closest('[data-sid]') : null;
+    if (!el || el !== popArmed) return;
+    var to = e.relatedTarget && e.relatedTarget.closest ? e.relatedTarget.closest('[data-sid]') : null;
+    if (to === el) return; // 行内子元素间移动
+    disarmPop();
+  });
+  if (els.target) els.target.addEventListener('change', function () { writeTarget(els.target.value || ''); });
+})();
+</script></body></html>
